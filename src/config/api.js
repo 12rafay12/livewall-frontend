@@ -1,5 +1,6 @@
 // API Configuration
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
 export const API_ENDPOINTS = {
   UPLOADS: `${API_BASE_URL}/api/uploads`,
@@ -10,7 +11,6 @@ export const API_ENDPOINTS = {
 // Helper to get full image URL
 export const getImageUrl = (path) => {
   if (!path) return null;
-  if (path.startsWith('http')) return path;
+  if (path.startsWith("http")) return path;
   return `${API_BASE_URL}${path}`;
 };
-
