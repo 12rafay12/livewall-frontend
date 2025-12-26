@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Image from "next/image";
 import { API_ENDPOINTS, getImageUrl } from "@/config/api";
 
@@ -9,6 +9,8 @@ export default function AdminPanel() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [filter, setFilter] = useState("all");
+  const intervalRef = useRef(null);
+  const isFetchingRef = useRef(false);
 
   // Calculate counts for each filter
   const filterCounts = useMemo(() => {
@@ -25,8 +27,12 @@ export default function AdminPanel() {
     };
   }, [uploads]);
 
-  // Fetch uploads
-  const fetchUploads = async () => {
+  // Fetch uploads - memoized to prevent unnecessary re-renders
+  const fetchUploads = useCallback(async () => {
+    // Prevent concurrent fetches
+    if (isFetchingRef.current) return;
+
+    isFetchingRef.current = true;
     try {
       const response = await fetch(API_ENDPOINTS.UPLOADS);
       if (response.ok) {
@@ -37,15 +43,20 @@ export default function AdminPanel() {
       console.error("Error fetching uploads:", error);
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchUploads();
     // Poll for updates every 5 seconds
-    const interval = setInterval(fetchUploads, 5000);
-    return () => clearInterval(interval);
-  }, []);
+    intervalRef.current = setInterval(fetchUploads, 20000);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [fetchUploads]);
 
   // Handle bulk actions
   const handleBulkAction = async (action) => {
@@ -117,19 +128,19 @@ export default function AdminPanel() {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950">
       {/* Header */}
       <div className="bg-black/40 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-white tracking-tight">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight truncate">
                 Admin Panel
               </h1>
-              <p className="text-slate-400 text-sm mt-1">
+              <p className="text-slate-400 text-xs sm:text-sm mt-0.5 sm:mt-1">
                 Manage content and approvals
               </p>
             </div>
-            <div className="text-right">
-              <div className="text-white/60 text-sm">Total Uploads</div>
-              <div className="text-2xl font-bold text-white">
+            <div className="text-right flex-shrink-0">
+              <div className="text-white/60 text-xs sm:text-sm">Total Uploads</div>
+              <div className="text-xl sm:text-2xl font-bold text-white">
                 {uploads.length}
               </div>
             </div>
@@ -137,12 +148,12 @@ export default function AdminPanel() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
         {/* Filters and Bulk Actions */}
-        <div className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 mb-8 border border-white/10 shadow-2xl">
-          <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
+        <div className="bg-white/5 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 md:mb-8 border border-white/10 shadow-2xl">
+          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-start lg:items-center justify-between">
             {/* Filter Tabs */}
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2 sm:gap-3 w-full lg:w-auto">
               {[
                 { key: "all", label: "All" },
                 { key: "pending", label: "Pending" },
@@ -153,7 +164,7 @@ export default function AdminPanel() {
                 <button
                   key={key}
                   onClick={() => setFilter(key)}
-                  className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  className={`px-3 sm:px-4 md:px-5 py-1.5 sm:py-2 md:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 ${
                     filter === key
                       ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-500/50 scale-105"
                       : "bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white border border-white/10"
@@ -161,7 +172,7 @@ export default function AdminPanel() {
                 >
                   {label}
                   <span
-                    className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                    className={`ml-1.5 sm:ml-2 px-1.5 sm:px-2 py-0.5 rounded-full text-xs ${
                       filter === key ? "bg-white/20" : "bg-white/10"
                     }`}
                   >
@@ -175,14 +186,14 @@ export default function AdminPanel() {
 
         {/* Uploads Grid */}
         {isLoading ? (
-          <div className="text-center py-20">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-            <p className="text-slate-400 mt-4">Loading uploads...</p>
+          <div className="text-center py-12 sm:py-16 md:py-20">
+            <div className="inline-block animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-white"></div>
+            <p className="text-slate-400 mt-3 sm:mt-4 text-sm sm:text-base">Loading uploads...</p>
           </div>
         ) : filteredUploads.length === 0 ? (
-          <div className="text-center py-20 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
+          <div className="text-center py-12 sm:py-16 md:py-20 bg-white/5 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-white/10">
             <svg
-              className="mx-auto h-16 w-16 text-slate-500"
+              className="mx-auto h-12 w-12 sm:h-16 sm:w-16 text-slate-500"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -194,19 +205,19 @@ export default function AdminPanel() {
                 d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
               />
             </svg>
-            <p className="text-slate-400 mt-4 text-lg">No uploads found</p>
+            <p className="text-slate-400 mt-3 sm:mt-4 text-base sm:text-lg">No uploads found</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
             {filteredUploads.map((upload) => (
               <div
                 key={upload.id}
-                className="bg-white/5 backdrop-blur-xl rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 group"
+                className="bg-white/5 backdrop-blur-xl rounded-xl sm:rounded-2xl overflow-hidden border border-white/10 hover:border-white/20 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/10 group"
               >
                 {/* Status and Date */}
-                <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                <div className="p-3 sm:p-4 border-b border-white/10 flex items-center justify-between gap-2">
                   <StatusBadge status={upload.status} />
-                  <span className="text-slate-400 text-xs">
+                  <span className="text-slate-400 text-xs flex-shrink-0">
                     {new Date(upload.createdAt).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
@@ -223,47 +234,52 @@ export default function AdminPanel() {
                       src={getImageUrl(upload.photoUrl)}
                       alt="Upload"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        // Only log the URL, not the event object to avoid Next.js warnings
+                        console.error("Image failed to load:", upload.photoUrl);
+                        e.target.style.display = "none";
+                      }}
                     />
                   </div>
                 )}
 
                 {/* Message */}
                 {upload.message && (
-                  <div className="p-4 bg-black/20">
-                    <p className="text-white text-sm leading-relaxed line-clamp-3">
+                  <div className="p-3 sm:p-4 bg-black/20">
+                    <p className="text-white text-xs sm:text-sm leading-relaxed line-clamp-3">
                       {upload.message}
                     </p>
                   </div>
                 )}
 
                 {/* Action Buttons */}
-                <div className="p-4 border-t border-white/10">
+                <div className="p-3 sm:p-4 border-t border-white/10">
                   {upload.status.toLowerCase() === "pending" && (
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                       <button
                         onClick={() => handleItemAction(upload.id, "approve")}
-                        className="px-3 py-2 bg-emerald-600/80 hover:bg-emerald-600 text-white rounded-lg text-xs font-semibold transition-all shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40"
+                        className="px-2 sm:px-3 py-1.5 sm:py-2 bg-emerald-600/80 hover:bg-emerald-600 text-white rounded-md sm:rounded-lg text-xs font-semibold transition-all shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40"
                       >
-                        ✓ Approve
+                        <span className="hidden sm:inline">✓ </span>Approve
                       </button>
                       <button
                         onClick={() => handleItemAction(upload.id, "reject")}
-                        className="px-3 py-2 bg-rose-600/80 hover:bg-rose-600 text-white rounded-lg text-xs font-semibold transition-all shadow-lg shadow-rose-500/20 hover:shadow-rose-500/40"
+                        className="px-2 sm:px-3 py-1.5 sm:py-2 bg-rose-600/80 hover:bg-rose-600 text-white rounded-md sm:rounded-lg text-xs font-semibold transition-all shadow-lg shadow-rose-500/20 hover:shadow-rose-500/40"
                       >
-                        ✗ Reject
+                        <span className="hidden sm:inline">✗ </span>Reject
                       </button>
                       <button
                         onClick={() => handleItemAction(upload.id, "schedule")}
-                        className="px-3 py-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded-lg text-xs font-semibold transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40"
+                        className="px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded-md sm:rounded-lg text-xs font-semibold transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40"
                       >
-                        ⏰ Schedule
+                        <span className="hidden sm:inline">⏰ </span>Schedule
                       </button>
                     </div>
                   )}
                   {upload.status.toLowerCase() === "scheduled" && (
                     <button
                       onClick={() => handleItemAction(upload.id, "approve")}
-                      className="w-full px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold transition-all shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50"
                     >
                       Activate Now
                     </button>

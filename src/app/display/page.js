@@ -160,17 +160,17 @@ export default function DisplayPage() {
     <div className="fixed inset-0 overflow-hidden bg-black">
       {/* Full-screen QR Code Overlay */}
       {showFullScreenQR && (
-        <div className="absolute inset-0 z-50 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center">
-          <div className="bg-white p-12 rounded-3xl shadow-2xl shadow-indigo-500/20 border-4 border-indigo-500/30">
+        <div className="absolute inset-0 z-50 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center p-4 sm:p-6 md:p-8">
+          <div className="bg-white p-6 sm:p-8 md:p-12 rounded-2xl sm:rounded-3xl shadow-2xl shadow-indigo-500/20 border-2 sm:border-4 border-indigo-500/30 w-full max-w-xs sm:max-w-md md:max-w-2xl">
             <Image
               src="/Landscape screen qr code.png"
               alt="QR Code"
               width={600}
               height={600}
-              className="w-full h-full max-w-2xl max-h-2xl object-contain"
+              className="w-full h-full max-w-full object-contain"
               priority
             />
-            <p className="text-center text-slate-600 mt-4 text-lg font-semibold">
+            <p className="text-center text-slate-600 mt-3 sm:mt-4 text-sm sm:text-base md:text-lg font-semibold">
               Scan to share your moment
             </p>
           </div>
@@ -179,25 +179,27 @@ export default function DisplayPage() {
 
       {/* Passive Mode */}
       {!isActive && !showFullScreenQR && (
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center p-4 sm:p-6">
           {/* Small neon QR code in corner */}
-          <div className="absolute top-6 right-6 bg-white p-3 rounded-2xl shadow-[0_0_30px_rgba(99,102,241,0.6)] border-2 border-indigo-400/50 backdrop-blur-sm">
+          <div className="absolute top-3 right-3 sm:top-4 sm:right-4 md:top-6 md:right-6 bg-white p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-[0_0_30px_rgba(99,102,241,0.6)] border-2 border-indigo-400/50 backdrop-blur-sm">
             <Image
               src="/Landscape screen qr code.png"
               alt="QR Code"
               width={100}
               height={100}
-              className="w-20 h-20 object-contain"
+              className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain"
             />
           </div>
 
           {/* Center content */}
-          <div className="text-center">
-            <div className="inline-block p-8 bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10">
-              <h1 className="text-6xl font-bold text-white mb-4 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+          <div className="text-center px-4">
+            <div className="inline-block p-6 sm:p-8 bg-white/5 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-white/10">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-3 sm:mb-4 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
                 LiveWall
               </h1>
-              <p className="text-slate-400 text-xl">Waiting for content...</p>
+              <p className="text-slate-400 text-base sm:text-lg md:text-xl">
+                Waiting for content...
+              </p>
             </div>
           </div>
         </div>
@@ -213,15 +215,22 @@ export default function DisplayPage() {
                 src={getImageUrl(currentUpload.photoUrl)}
                 alt="Display"
                 className="max-w-full max-h-full object-contain"
+                onError={() => {
+                  // Only log the URL, not the event object to avoid Next.js warnings
+                  console.error(
+                    "Image failed to load:",
+                    currentUpload.photoUrl
+                  );
+                }}
               />
             </div>
           )}
 
           {/* Message - Below Image */}
           {currentUpload.message && (
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent pt-16 pb-8 px-8">
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent pt-8 sm:pt-12 md:pt-16 pb-4 sm:pb-6 md:pb-8 px-4 sm:px-6 md:px-8">
               <div className="max-w-5xl mx-auto">
-                <p className="text-white text-5xl md:text-7xl font-bold text-center leading-tight drop-shadow-2xl">
+                <p className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-7xl font-bold text-center leading-tight drop-shadow-2xl">
                   {currentUpload.message}
                 </p>
               </div>
@@ -229,27 +238,27 @@ export default function DisplayPage() {
           )}
 
           {/* Small QR code in corner (always visible) */}
-          <div className="absolute top-6 right-6 bg-white/95 backdrop-blur-sm p-3 rounded-2xl shadow-[0_0_30px_rgba(99,102,241,0.4)] border-2 border-indigo-400/30 z-10">
+          <div className="absolute top-3 right-3 sm:top-4 sm:right-4 md:top-6 md:right-6 bg-white/95 backdrop-blur-sm p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-[0_0_30px_rgba(99,102,241,0.4)] border-2 border-indigo-400/30 z-10">
             <Image
               src="/Landscape screen qr code.png"
               alt="QR Code"
               width={100}
               height={100}
-              className="w-20 h-20 object-contain"
+              className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain"
             />
           </div>
 
           {/* Progress indicator */}
           {uploads.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20">
-              <div className="flex gap-2 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
+            <div className="absolute bottom-2 sm:bottom-3 md:bottom-4 left-1/2 transform -translate-x-1/2 z-20">
+              <div className="flex gap-1.5 sm:gap-2 bg-black/40 backdrop-blur-md px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-white/20">
                 {uploads.map((_, index) => (
                   <div
                     key={index}
-                    className={`h-2 rounded-full transition-all duration-300 ${
+                    className={`h-1.5 sm:h-2 rounded-full transition-all duration-300 ${
                       index === currentIndex
-                        ? "bg-indigo-400 w-8 shadow-lg shadow-indigo-400/50"
-                        : "bg-white/30 w-2"
+                        ? "bg-indigo-400 w-6 sm:w-8 shadow-lg shadow-indigo-400/50"
+                        : "bg-white/30 w-1.5 sm:w-2"
                     }`}
                   />
                 ))}
