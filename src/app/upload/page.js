@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { API_ENDPOINTS } from "@/config/api";
+import QRCode from "@/components/QRCode";
 
 export default function UploadPage() {
   const [file, setFile] = useState(null);
@@ -319,21 +320,9 @@ export default function UploadPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center p-3 sm:p-4 md:p-6 py-6 sm:py-8">
       <div className="w-full max-w-lg">
         {/* QR Code at top */}
-        <div className="mb-4 sm:mb-6 md:mb-8 flex justify-center">
-          <div className="bg-white/10 backdrop-blur-xl rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 border border-white/20 shadow-2xl">
-            <Image
-              src="/Landscape screen qr code.png"
-              alt="QR Code"
-              width={180}
-              height={180}
-              className="w-32 h-32 sm:w-40 sm:h-40 md:w-44 md:h-44 object-contain"
-              priority
-            />
-            <p className="text-center text-white/70 text-xs sm:text-sm mt-2 sm:mt-3 font-medium">
-              Scan to share your moment
-            </p>
-          </div>
-        </div>
+        {/* <div className="mb-4 sm:mb-6 md:mb-8 flex justify-center">
+          <QRCode variant="compact" />
+        </div> */}
 
         {/* Upload Form */}
         <div className="bg-white/5 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-2xl border border-white/10">

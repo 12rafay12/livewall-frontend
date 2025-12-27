@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { API_ENDPOINTS, getImageUrl } from "@/config/api";
+import QRCode from "@/components/QRCode";
 
 const DISPLAY_DURATION = 10000; // 10 seconds per item (strict rule)
 const QR_INTERVAL = 600000; // 10 minutes (configurable)
@@ -160,20 +161,8 @@ export default function DisplayPage() {
     <div className="fixed inset-0 overflow-hidden bg-black">
       {/* Full-screen QR Code Overlay */}
       {showFullScreenQR && (
-        <div className="absolute inset-0 z-50 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center p-4 sm:p-6 md:p-8">
-          <div className="bg-white p-6 sm:p-8 md:p-12 rounded-2xl sm:rounded-3xl shadow-2xl shadow-indigo-500/20 border-2 sm:border-4 border-indigo-500/30 w-full max-w-xs sm:max-w-md md:max-w-2xl">
-            <Image
-              src="/Landscape screen qr code.png"
-              alt="QR Code"
-              width={600}
-              height={600}
-              className="w-full h-full max-w-full object-contain"
-              priority
-            />
-            <p className="text-center text-slate-600 mt-3 sm:mt-4 text-sm sm:text-base md:text-lg font-semibold">
-              Scan to share your moment
-            </p>
-          </div>
+        <div className="absolute inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-8">
+          <QRCode variant="full" className="w-full max-w-4xl" />
         </div>
       )}
 
@@ -181,14 +170,8 @@ export default function DisplayPage() {
       {!isActive && !showFullScreenQR && (
         <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center p-4 sm:p-6">
           {/* Small neon QR code in corner */}
-          <div className="absolute top-3 right-3 sm:top-4 sm:right-4 md:top-6 md:right-6 bg-white p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-[0_0_30px_rgba(99,102,241,0.6)] border-2 border-indigo-400/50 backdrop-blur-sm">
-            <Image
-              src="/Landscape screen qr code.png"
-              alt="QR Code"
-              width={100}
-              height={100}
-              className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain"
-            />
+          <div className="absolute top-3 right-3 sm:top-4 sm:right-4 md:top-6 md:right-6">
+            <QRCode variant="mini" />
           </div>
 
           {/* Center content */}
@@ -238,14 +221,8 @@ export default function DisplayPage() {
           )}
 
           {/* Small QR code in corner (always visible) */}
-          <div className="absolute top-3 right-3 sm:top-4 sm:right-4 md:top-6 md:right-6 bg-white/95 backdrop-blur-sm p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-[0_0_30px_rgba(99,102,241,0.4)] border-2 border-indigo-400/30 z-10">
-            <Image
-              src="/Landscape screen qr code.png"
-              alt="QR Code"
-              width={100}
-              height={100}
-              className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain"
-            />
+          <div className="absolute top-3 right-3 sm:top-4 sm:right-4 md:top-6 md:right-6 z-10">
+            <QRCode variant="mini" />
           </div>
 
           {/* Progress indicator */}
