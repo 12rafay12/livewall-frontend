@@ -12,9 +12,11 @@ export default function UploadPage() {
   const [cameraError, setCameraError] = useState(null);
   const [isLoadingCamera, setIsLoadingCamera] = useState(false);
   const [showMessageScreen, setShowMessageScreen] = useState(false);
+  const [showFlash, setShowFlash] = useState(false);
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const canvasRef = useRef(null);
+  const capturedFileRef = useRef(null);
 
   // Auto-open camera on page load
   useEffect(() => {
@@ -173,6 +175,10 @@ export default function UploadPage() {
   const capturePhoto = () => {
     if (!videoRef.current || !canvasRef.current) return;
 
+    // Trigger flash animation
+    setShowFlash(true);
+    setTimeout(() => setShowFlash(false), 300);
+
     const video = videoRef.current;
     const canvas = canvasRef.current;
 
@@ -190,12 +196,14 @@ export default function UploadPage() {
         const imageUrl = URL.createObjectURL(blob);
         setCapturedImage(imageUrl);
 
-        // Store file for upload
-        canvas.capturedFile = file;
+        // Store file for upload in ref
+        capturedFileRef.current = file;
 
-        // Close camera and show message screen
-        closeCamera();
-        setShowMessageScreen(true);
+        // Delay closing camera and showing form to let flash complete
+        setTimeout(() => {
+          closeCamera();
+          setShowMessageScreen(true);
+        }, 350);
       },
       "image/jpeg",
       0.9
@@ -208,6 +216,7 @@ export default function UploadPage() {
     setMessage("");
     setShowMessageScreen(false);
     setSubmitStatus(null);
+    capturedFileRef.current = null;
     // Reopen camera
     openCamera();
   };
@@ -224,8 +233,8 @@ export default function UploadPage() {
     try {
       const formData = new FormData();
 
-      // Get the file from canvas
-      const file = canvasRef.current.capturedFile;
+      // Get the file from ref
+      const file = capturedFileRef.current;
       if (file) {
         formData.append("photo", file);
       }
@@ -257,8 +266,35 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center p-4">
-      {/* Camera View */}
+    <>
+      <style jsx>{`
+        @keyframes flash {
+          0% {
+            opacity: 0;
+          }
+          50% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+          }
+        }
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 300ms ease-out;
+        }
+      `}</style>
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center p-4">
+        {/* Camera View */}
       {isCameraOpen && (
         <div className="fixed inset-0 z-50 bg-black flex flex-col">
           {/* Header */}
@@ -278,6 +314,16 @@ export default function UploadPage() {
               className="w-full h-full object-cover"
             />
             <canvas ref={canvasRef} className="hidden" />
+
+            {/* Flash Animation */}
+            {showFlash && (
+              <div
+                className="absolute inset-0 bg-white pointer-events-none"
+                style={{
+                  animation: "flash 300ms ease-out",
+                }}
+              />
+            )}
 
             {/* Loading indicator */}
             {isLoadingCamera && (
@@ -362,14 +408,14 @@ export default function UploadPage() {
 
           {/* Camera Controls */}
           {streamRef.current && !isLoadingCamera && !cameraError && (
-            <div className="bg-gradient-to-t from-black to-transparent p-6">
+            <div className="bg-gradient-to-t from-black to-transparent p-6 md:p-8">
               <div className="flex items-center justify-center">
                 <button
                   type="button"
                   onClick={capturePhoto}
-                  className="w-20 h-20 bg-white rounded-full border-4 border-white/30 shadow-lg hover:scale-105 transition-transform flex items-center justify-center"
+                  className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-full border-4 md:border-6 border-white/30 shadow-2xl hover:scale-105 active:scale-95 transition-transform flex items-center justify-center relative z-50"
                 >
-                  <div className="w-16 h-16 bg-white rounded-full"></div>
+                  <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-full"></div>
                 </button>
               </div>
               {/* Photographer Link */}
@@ -401,7 +447,7 @@ export default function UploadPage() {
 
       {/* Message Screen */}
       {showMessageScreen && capturedImage && (
-        <div className="w-full max-w-lg">
+        <div className="w-full max-w-lg animate-fadeIn">
           <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/10">
             <div className="text-center mb-6">
               <h1 className="text-3xl font-bold text-white mb-2 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
@@ -529,6 +575,7 @@ export default function UploadPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
