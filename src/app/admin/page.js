@@ -9,6 +9,16 @@ export default function AdminPanel() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [filter, setFilter] = useState("all");
+  const [view, setView] = useState("uploads"); // "uploads" or "photographers"
+  const [photographers, setPhotographers] = useState([]);
+  const [isLoadingPhotographers, setIsLoadingPhotographers] = useState(false);
+  const [showPhotographerModal, setShowPhotographerModal] = useState(false);
+  const [editingPhotographer, setEditingPhotographer] = useState(null);
+  const [photographerForm, setPhotographerForm] = useState({
+    username: "",
+    password: "",
+    isActive: true,
+  });
   const intervalRef = useRef(null);
   const isFetchingRef = useRef(false);
 
@@ -57,6 +67,91 @@ export default function AdminPanel() {
       }
     };
   }, [fetchUploads]);
+
+  // Fetch photographers
+  const fetchPhotographers = useCallback(async () => {
+    setIsLoadingPhotographers(true);
+    try {
+      const response = await fetch(API_ENDPOINTS.USERS);
+      if (response.ok) {
+        const data = await response.json();
+        setPhotographers(data);
+      }
+    } catch (error) {
+      console.error("Error fetching photographers:", error);
+    } finally {
+      setIsLoadingPhotographers(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (view === "photographers") {
+      fetchPhotographers();
+    }
+  }, [view, fetchPhotographers]);
+
+  // Handle photographer form submission
+  const handlePhotographerSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const url = editingPhotographer
+        ? API_ENDPOINTS.USER_BY_ID(editingPhotographer.id)
+        : API_ENDPOINTS.USERS;
+      const method = editingPhotographer ? "PATCH" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(photographerForm),
+      });
+
+      if (response.ok) {
+        setShowPhotographerModal(false);
+        setEditingPhotographer(null);
+        setPhotographerForm({ username: "", password: "", isActive: true });
+        fetchPhotographers();
+      }
+    } catch (error) {
+      console.error("Error saving photographer:", error);
+    }
+  };
+
+  // Delete photographer
+  const handleDeletePhotographer = async (id) => {
+    if (!confirm("Are you sure you want to delete this photographer?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(API_ENDPOINTS.USER_BY_ID(id), {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        fetchPhotographers();
+      }
+    } catch (error) {
+      console.error("Error deleting photographer:", error);
+    }
+  };
+
+  // Toggle photographer active status
+  const handleToggleActive = async (photographer) => {
+    try {
+      const response = await fetch(API_ENDPOINTS.USER_BY_ID(photographer.id), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !photographer.isActive }),
+      });
+
+      if (response.ok) {
+        fetchPhotographers();
+      }
+    } catch (error) {
+      console.error("Error toggling active status:", error);
+    }
+  };
 
   // Handle bulk actions
   const handleBulkAction = async (action) => {
@@ -149,11 +244,38 @@ export default function AdminPanel() {
       </div>
 
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
-        {/* Filters and Bulk Actions */}
-        <div className="bg-white/5 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 md:mb-8 border border-white/10 shadow-2xl">
-          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-start lg:items-center justify-between">
-            {/* Filter Tabs */}
-            <div className="flex flex-wrap gap-2 sm:gap-3 w-full lg:w-auto">
+        {/* View Toggle */}
+        <div className="mb-4 sm:mb-6 flex gap-3">
+          <button
+            onClick={() => setView("uploads")}
+            className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all ${
+              view === "uploads"
+                ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg"
+                : "bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10"
+            }`}
+          >
+            Uploads
+          </button>
+          <button
+            onClick={() => setView("photographers")}
+            className={`px-6 py-3 rounded-xl text-sm font-semibold transition-all ${
+              view === "photographers"
+                ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg"
+                : "bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10"
+            }`}
+          >
+            Photographers
+          </button>
+        </div>
+
+        {/* Uploads View */}
+        {view === "uploads" && (
+          <>
+            {/* Filters and Bulk Actions */}
+            <div className="bg-white/5 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6 md:mb-8 border border-white/10 shadow-2xl">
+              <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-start lg:items-center justify-between">
+                {/* Filter Tabs */}
+                <div className="flex flex-wrap gap-2 sm:gap-3 w-full lg:w-auto">
               {[
                 { key: "all", label: "All" },
                 { key: "pending", label: "Pending" },
@@ -287,6 +409,174 @@ export default function AdminPanel() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+          </>
+        )}
+
+        {/* Photographers View */}
+        {view === "photographers" && (
+          <div className="space-y-6">
+            {/* Header with Add Button */}
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-white">
+                Photographers ({photographers.length})
+              </h2>
+              <button
+                onClick={() => {
+                  setEditingPhotographer(null);
+                  setPhotographerForm({ username: "", password: "", isActive: true });
+                  setShowPhotographerModal(true);
+                }}
+                className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl text-sm font-semibold shadow-lg hover:shadow-indigo-500/50 transition-all"
+              >
+                + Add Photographer
+              </button>
+            </div>
+
+            {/* Photographers Grid */}
+            {isLoadingPhotographers ? (
+              <div className="text-center py-20">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+              </div>
+            ) : photographers.length === 0 ? (
+              <div className="text-center py-20 bg-white/5 rounded-2xl border border-white/10">
+                <p className="text-slate-400">No photographers found</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {photographers.map((photographer) => (
+                  <div
+                    key={photographer._id}
+                    className="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-white">
+                          {photographer.username}
+                        </h3>
+                        <p className="text-xs text-slate-400 mt-1">
+                          {new Date(photographer.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          photographer.isActive
+                            ? "bg-emerald-500/20 text-emerald-300"
+                            : "bg-rose-500/20 text-rose-300"
+                        }`}
+                      >
+                        {photographer.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setEditingPhotographer(photographer);
+                          setPhotographerForm({
+                            username: photographer.username,
+                            password: "",
+                            isActive: photographer.isActive,
+                          });
+                          setShowPhotographerModal(true);
+                        }}
+                        className="flex-1 px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-medium transition-all"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleToggleActive(photographer)}
+                        className="flex-1 px-3 py-2 bg-indigo-600/80 hover:bg-indigo-600 text-white rounded-lg text-xs font-medium transition-all"
+                      >
+                        {photographer.isActive ? "Deactivate" : "Activate"}
+                      </button>
+                      <button
+                        onClick={() => handleDeletePhotographer(photographer._id)}
+                        className="px-3 py-2 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 rounded-lg text-xs font-medium transition-all"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Photographer Modal */}
+        {showPhotographerModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+            <div className="bg-gradient-to-br from-slate-900 to-indigo-900 rounded-3xl p-8 max-w-md w-full border border-white/10 shadow-2xl">
+              <h2 className="text-2xl font-bold text-white mb-6">
+                {editingPhotographer ? "Edit Photographer" : "Add Photographer"}
+              </h2>
+              <form onSubmit={handlePhotographerSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    value={photographerForm.username}
+                    onChange={(e) =>
+                      setPhotographerForm({ ...photographerForm, username: e.target.value })
+                    }
+                    required
+                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">
+                    Password {editingPhotographer && "(leave blank to keep current)"}
+                  </label>
+                  <input
+                    type="password"
+                    value={photographerForm.password}
+                    onChange={(e) =>
+                      setPhotographerForm({ ...photographerForm, password: e.target.value })
+                    }
+                    required={!editingPhotographer}
+                    minLength={8}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="isActive"
+                    checked={photographerForm.isActive}
+                    onChange={(e) =>
+                      setPhotographerForm({ ...photographerForm, isActive: e.target.checked })
+                    }
+                    className="w-5 h-5 rounded border-white/20 bg-white/5"
+                  />
+                  <label htmlFor="isActive" className="text-white text-sm font-medium">
+                    Active
+                  </label>
+                </div>
+                <div className="flex gap-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPhotographerModal(false);
+                      setEditingPhotographer(null);
+                      setPhotographerForm({ username: "", password: "", isActive: true });
+                    }}
+                    className="flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-semibold transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl font-semibold transition-all shadow-lg"
+                  >
+                    {editingPhotographer ? "Update" : "Create"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
       </div>
