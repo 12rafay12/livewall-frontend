@@ -27,6 +27,9 @@ export default function AdminPanel() {
   const [totalPages, setTotalPages] = useState(0);
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [schedulingUploadId, setSchedulingUploadId] = useState(null);
+  const [scheduledDateTime, setScheduledDateTime] = useState("");
   const intervalRef = useRef(null);
   const isFetchingRef = useRef(false);
 
@@ -205,6 +208,63 @@ export default function AdminPanel() {
       }
     } catch (error) {
       console.error("Action error:", error);
+    }
+  };
+
+  // Handle delete upload
+  const handleDeleteUpload = async (id) => {
+    if (!confirm("Are you sure you want to delete this upload? This will permanently remove the image from S3 storage.")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(API_ENDPOINTS.UPLOAD_BY_ID(id), {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        fetchUploads();
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+    }
+  };
+
+  // Open schedule modal
+  const handleOpenScheduleModal = (id) => {
+    setSchedulingUploadId(id);
+    // Set default to current date/time
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    setScheduledDateTime(now.toISOString().slice(0, 16));
+    setShowScheduleModal(true);
+  };
+
+  // Handle schedule submission
+  const handleScheduleSubmit = async () => {
+    if (!scheduledDateTime) {
+      alert("Please select a date and time");
+      return;
+    }
+
+    try {
+      const response = await fetch(API_ENDPOINTS.UPLOAD_BY_ID(schedulingUploadId), {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "schedule",
+          scheduledFor: new Date(scheduledDateTime).toISOString()
+        }),
+      });
+
+      if (response.ok) {
+        setShowScheduleModal(false);
+        setSchedulingUploadId(null);
+        setScheduledDateTime("");
+        fetchUploads();
+      }
+    } catch (error) {
+      console.error("Schedule error:", error);
     }
   };
 
@@ -449,7 +509,7 @@ export default function AdminPanel() {
                       )}
 
                       {/* Action Buttons */}
-                      <div className="p-3 sm:p-4 border-t border-white/10">
+                      <div className="p-3 sm:p-4 border-t border-white/10 space-y-2">
                         {upload.status.toLowerCase() === "pending" && (
                           <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                             <button
@@ -471,7 +531,7 @@ export default function AdminPanel() {
                             </button>
                             <button
                               onClick={() =>
-                                handleItemAction(upload.id, "schedule")
+                                handleOpenScheduleModal(upload.id)
                               }
                               className="px-2 sm:px-3 py-1.5 sm:py-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded-md sm:rounded-lg text-xs font-semibold transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40"
                             >
@@ -481,15 +541,43 @@ export default function AdminPanel() {
                           </div>
                         )}
                         {upload.status.toLowerCase() === "scheduled" && (
-                          <button
-                            onClick={() =>
-                              handleItemAction(upload.id, "approve")
-                            }
-                            className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50"
-                          >
-                            Activate Now
-                          </button>
+                          <div className="space-y-2">
+                            {upload.scheduledFor && (
+                              <div className="text-center py-2 px-3 bg-blue-500/20 rounded-lg border border-blue-500/30">
+                                <p className="text-blue-300 text-xs font-medium">
+                                  Scheduled for:
+                                </p>
+                                <p className="text-white text-sm font-semibold mt-1">
+                                  {new Date(upload.scheduledFor).toLocaleString("en-US", {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </p>
+                              </div>
+                            )}
+                            <button
+                              onClick={() =>
+                                handleItemAction(upload.id, "approve")
+                              }
+                              className="w-full px-3 sm:px-4 py-2 sm:py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50"
+                            >
+                              Activate Now
+                            </button>
+                          </div>
                         )}
+                        {/* Delete Button - Always visible */}
+                        <button
+                          onClick={() => handleDeleteUpload(upload.id)}
+                          className="w-full px-3 sm:px-4 py-2 bg-red-600/80 hover:bg-red-600 text-white rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-lg shadow-red-500/20 hover:shadow-red-500/40 flex items-center justify-center gap-2"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                          Delete
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -629,7 +717,19 @@ export default function AdminPanel() {
 
                             {/* Status */}
                             <td className="px-4 py-3">
-                              <StatusBadge status={upload.status} />
+                              <div className="flex flex-col gap-1">
+                                <StatusBadge status={upload.status} />
+                                {upload.status.toLowerCase() === "scheduled" && upload.scheduledFor && (
+                                  <span className="text-blue-300 text-xs">
+                                    {new Date(upload.scheduledFor).toLocaleString("en-US", {
+                                      month: "short",
+                                      day: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}
+                                  </span>
+                                )}
+                              </div>
                             </td>
 
                             {/* Displayed */}
@@ -656,39 +756,39 @@ export default function AdminPanel() {
 
                             {/* Actions */}
                             <td className="px-4 py-3">
-                              {upload.status.toLowerCase() === "pending" && (
-                                <div className="flex items-center justify-center gap-2">
-                                  <button
-                                    onClick={() => handleItemAction(upload.id, "approve")}
-                                    className="p-2 bg-emerald-600/80 hover:bg-emerald-600 text-white rounded-lg transition-all shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40"
-                                    title="Approve"
-                                  >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                    </svg>
-                                  </button>
-                                  <button
-                                    onClick={() => handleItemAction(upload.id, "reject")}
-                                    className="p-2 bg-rose-600/80 hover:bg-rose-600 text-white rounded-lg transition-all shadow-lg shadow-rose-500/20 hover:shadow-rose-500/40"
-                                    title="Reject"
-                                  >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                  </button>
-                                  <button
-                                    onClick={() => handleItemAction(upload.id, "schedule")}
-                                    className="p-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded-lg transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40"
-                                    title="Schedule"
-                                  >
-                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                  </button>
-                                </div>
-                              )}
-                              {upload.status.toLowerCase() === "scheduled" && (
-                                <div className="flex items-center justify-center">
+                              <div className="flex items-center justify-center gap-2">
+                                {upload.status.toLowerCase() === "pending" && (
+                                  <>
+                                    <button
+                                      onClick={() => handleItemAction(upload.id, "approve")}
+                                      className="p-2 bg-emerald-600/80 hover:bg-emerald-600 text-white rounded-lg transition-all shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40"
+                                      title="Approve"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                      </svg>
+                                    </button>
+                                    <button
+                                      onClick={() => handleItemAction(upload.id, "reject")}
+                                      className="p-2 bg-rose-600/80 hover:bg-rose-600 text-white rounded-lg transition-all shadow-lg shadow-rose-500/20 hover:shadow-rose-500/40"
+                                      title="Reject"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                      </svg>
+                                    </button>
+                                    <button
+                                      onClick={() => handleOpenScheduleModal(upload.id)}
+                                      className="p-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded-lg transition-all shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40"
+                                      title="Schedule"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                      </svg>
+                                    </button>
+                                  </>
+                                )}
+                                {upload.status.toLowerCase() === "scheduled" && (
                                   <button
                                     onClick={() => handleItemAction(upload.id, "approve")}
                                     className="p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-all shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50"
@@ -698,8 +798,18 @@ export default function AdminPanel() {
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                     </svg>
                                   </button>
-                                </div>
-                              )}
+                                )}
+                                {/* Delete Button - Always visible */}
+                                <button
+                                  onClick={() => handleDeleteUpload(upload.id)}
+                                  className="p-2 bg-red-600/80 hover:bg-red-600 text-white rounded-lg transition-all shadow-lg shadow-red-500/20 hover:shadow-red-500/40"
+                                  title="Delete"
+                                >
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -989,6 +1099,51 @@ export default function AdminPanel() {
                 alt="Full size"
                 className="w-full h-full object-contain rounded-lg"
               />
+            </div>
+          </div>
+        )}
+
+        {/* Schedule Modal */}
+        {showScheduleModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div className="bg-gradient-to-br from-slate-900 to-indigo-900 rounded-3xl p-8 max-w-md w-full border border-white/10 shadow-2xl">
+              <h2 className="text-2xl font-bold text-white mb-6">Schedule Upload</h2>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-white mb-2">
+                    Select Date and Time
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={scheduledDateTime}
+                    onChange={(e) => setScheduledDateTime(e.target.value)}
+                    className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="text-slate-400 text-xs mt-2">
+                    The upload will be automatically activated at the selected time
+                  </p>
+                </div>
+                <div className="flex gap-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowScheduleModal(false);
+                      setSchedulingUploadId(null);
+                      setScheduledDateTime("");
+                    }}
+                    className="flex-1 px-4 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-semibold transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleScheduleSubmit}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-semibold transition-all shadow-lg"
+                  >
+                    Schedule
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

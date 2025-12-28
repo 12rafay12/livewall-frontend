@@ -29,11 +29,13 @@ export default function DisplayPage() {
   // Fetch approved uploads
   const fetchApprovedUploads = async () => {
     try {
-      const response = await fetch(`${API_ENDPOINTS.UPLOADS}?status=approved`);
+      const response = await fetch(`${API_ENDPOINTS.UPLOADS}?status=approved&displayed=not-displayed`);
       if (response.ok) {
         const data = await response.json();
+        // Handle paginated response
+        const uploadsList = data.uploads || [];
         // Filter out already displayed items
-        const newItems = data.filter(
+        const newItems = uploadsList.filter(
           (item) => !displayedIdsRef.current.has(item.id)
         );
 
@@ -150,12 +152,32 @@ export default function DisplayPage() {
   // Poll for new approved uploads
   useEffect(() => {
     fetchApprovedUploads();
-    const pollInterval = setInterval(fetchApprovedUploads, 5000); // Poll every 5 seconds
 
-    return () => clearInterval(pollInterval);
-  }, []);
+    // Only poll when not active (no images showing)
+    if (!isActive) {
+      const pollInterval = setInterval(fetchApprovedUploads, 10000); // Poll every 10 seconds
+      return () => clearInterval(pollInterval);
+    }
+  }, [isActive]);
 
   const currentUpload = uploads[currentIndex];
+
+  // Mark upload as displayed when shown on screen
+  useEffect(() => {
+    if (isActive && currentUpload && !showFullScreenQR) {
+      // Call API to mark as displayed
+      const markAsDisplayed = async () => {
+        try {
+          await fetch(API_ENDPOINTS.UPLOAD_MARK_DISPLAYED(currentUpload.id), {
+            method: 'PATCH',
+          });
+        } catch (error) {
+          console.error('Error marking upload as displayed:', error);
+        }
+      };
+      markAsDisplayed();
+    }
+  }, [currentUpload?.id, isActive, showFullScreenQR]);
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-black">

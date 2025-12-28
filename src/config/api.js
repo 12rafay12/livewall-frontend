@@ -5,6 +5,7 @@ export const API_BASE_URL =
 export const API_ENDPOINTS = {
   UPLOADS: `${API_BASE_URL}/api/uploads`,
   UPLOAD_BY_ID: (id) => `${API_BASE_URL}/api/uploads/${id}`,
+  UPLOAD_MARK_DISPLAYED: (id) => `${API_BASE_URL}/api/uploads/${id}/displayed`,
   BULK_UPLOADS: `${API_BASE_URL}/api/uploads/bulk`,
   BATCH_UPLOADS: `${API_BASE_URL}/api/uploads/batch`,
   USERS: `${API_BASE_URL}/api/users`,
