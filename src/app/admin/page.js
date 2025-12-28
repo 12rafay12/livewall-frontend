@@ -111,7 +111,7 @@ export default function AdminPanel() {
 
     try {
       const url = editingPhotographer
-        ? API_ENDPOINTS.USER_BY_ID(editingPhotographer.id)
+        ? API_ENDPOINTS.USER_BY_ID(editingPhotographer._id)
         : API_ENDPOINTS.USERS;
       const method = editingPhotographer ? "PATCH" : "POST";
 
@@ -154,7 +154,7 @@ export default function AdminPanel() {
   // Toggle photographer active status
   const handleToggleActive = async (photographer) => {
     try {
-      const response = await fetch(API_ENDPOINTS.USER_BY_ID(photographer.id), {
+      const response = await fetch(API_ENDPOINTS.USER_BY_ID(photographer._id), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: !photographer.isActive }),
