@@ -5,7 +5,7 @@ import Image from "next/image";
 import { API_ENDPOINTS, getImageUrl } from "@/config/api";
 import QRCode from "@/components/QRCode";
 
-const DISPLAY_DURATION = 10000; // 10 seconds per item (strict rule)
+const DISPLAY_DURATION = 10000; // 15 seconds per item
 const QR_INTERVAL = 600000; // 10 minutes (configurable)
 const QR_DURATION = 90000; // 1.5 minutes (configurable)
 
@@ -180,6 +180,45 @@ export default function DisplayPage() {
   }, [currentUpload?.id, isActive, showFullScreenQR]);
 
   return (
+    <>
+      <style jsx global>{`
+        @keyframes swirlLeft {
+          0%, 100% {
+            transform: translate(0, 0) rotate(0deg);
+            opacity: 0.8;
+          }
+          25% {
+            transform: translate(-10px, -20px) rotate(5deg);
+            opacity: 1;
+          }
+          50% {
+            transform: translate(10px, -40px) rotate(-5deg);
+            opacity: 0.9;
+          }
+          75% {
+            transform: translate(-5px, -10px) rotate(3deg);
+            opacity: 1;
+          }
+        }
+        @keyframes swirlRight {
+          0%, 100% {
+            transform: translate(0, 0) rotate(0deg);
+            opacity: 0.8;
+          }
+          25% {
+            transform: translate(10px, -20px) rotate(-5deg);
+            opacity: 1;
+          }
+          50% {
+            transform: translate(-10px, -40px) rotate(5deg);
+            opacity: 0.9;
+          }
+          75% {
+            transform: translate(5px, -10px) rotate(-3deg);
+            opacity: 1;
+          }
+        }
+      `}</style>
     <div className="fixed inset-0 overflow-hidden bg-black">
       {/* Full-screen QR Code Overlay */}
       {showFullScreenQR && (
@@ -213,21 +252,166 @@ export default function DisplayPage() {
       {/* Active Mode - Slideshow */}
       {isActive && !showFullScreenQR && currentUpload && (
         <div className="absolute inset-0 bg-black">
-          {/* Photo - Full Screen */}
+          {/* LiveWall Visuals - Left Side */}
           {currentUpload.photoUrl && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <img
-                src={getImageUrl(currentUpload.photoUrl)}
-                alt="Display"
-                className="max-w-full max-h-full object-contain"
-                onError={() => {
-                  // Only log the URL, not the event object to avoid Next.js warnings
-                  console.error(
-                    "Image failed to load:",
-                    currentUpload.photoUrl
-                  );
-                }}
-              />
+            <div className="absolute left-0 top-0 bottom-0 w-1/3 pointer-events-none overflow-hidden">
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
+                <defs>
+                  <linearGradient id="swirlGradientLeft1" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#ff6b6b" stopOpacity="0.9" />
+                    <stop offset="25%" stopColor="#ffa500" stopOpacity="0.8" />
+                    <stop offset="50%" stopColor="#fbbf24" stopOpacity="0.7" />
+                    <stop offset="75%" stopColor="#ec4899" stopOpacity="0.6" />
+                    <stop offset="100%" stopColor="#a855f7" stopOpacity="0.4" />
+                  </linearGradient>
+                  <linearGradient id="swirlGradientLeft2" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#f97316" stopOpacity="0.8" />
+                    <stop offset="30%" stopColor="#fbbf24" stopOpacity="0.7" />
+                    <stop offset="60%" stopColor="#ec4899" stopOpacity="0.6" />
+                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.3" />
+                  </linearGradient>
+                  <linearGradient id="swirlGradientLeft3" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#ffa500" stopOpacity="0.7" />
+                    <stop offset="40%" stopColor="#ec4899" stopOpacity="0.6" />
+                    <stop offset="80%" stopColor="#a855f7" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="#6366f1" stopOpacity="0.2" />
+                  </linearGradient>
+                  <filter id="glowLeft">
+                    <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+                {/* Main swirling pattern - flowing from bottom center upward and outward */}
+                <path
+                  d="M 200 750 C 180 700, 150 650, 120 600 C 100 550, 90 500, 100 450 C 110 400, 130 350, 160 300 C 180 250, 200 200, 220 150 C 240 100, 260 80, 280 100 C 300 120, 310 150, 320 200 C 330 250, 330 300, 320 350 C 310 400, 290 450, 260 500 C 240 550, 220 600, 200 650 C 190 700, 200 750, 200 750"
+                  fill="none"
+                  stroke="url(#swirlGradientLeft1)"
+                  strokeWidth="4"
+                  filter="url(#glowLeft)"
+                  style={{
+                    animation: 'swirlLeft 12s ease-in-out infinite'
+                  }}
+                />
+                {/* Secondary swirling pattern */}
+                <path
+                  d="M 220 720 C 200 680, 170 640, 140 600 C 120 560, 110 520, 115 480 C 120 440, 135 400, 160 360 C 185 320, 210 280, 240 240 C 260 200, 280 170, 300 180 C 320 190, 335 220, 340 260 C 345 300, 340 340, 325 380 C 310 420, 285 460, 255 500 C 235 540, 220 580, 220 620 C 220 660, 220 720, 220 720"
+                  fill="none"
+                  stroke="url(#swirlGradientLeft2)"
+                  strokeWidth="3.5"
+                  filter="url(#glowLeft)"
+                  style={{
+                    animation: 'swirlLeft 14s ease-in-out infinite',
+                    animationDelay: '1.5s'
+                  }}
+                />
+                {/* Tertiary swirling pattern */}
+                <path
+                  d="M 180 740 C 160 700, 130 660, 100 620 C 80 580, 70 540, 75 500 C 80 460, 95 420, 120 380 C 145 340, 175 300, 210 260 C 235 220, 260 190, 290 200 C 315 210, 330 240, 335 280 C 340 320, 335 360, 320 400 C 305 440, 280 480, 250 520 C 230 560, 210 600, 190 640 C 180 680, 180 740, 180 740"
+                  fill="none"
+                  stroke="url(#swirlGradientLeft3)"
+                  strokeWidth="3"
+                  filter="url(#glowLeft)"
+                  style={{
+                    animation: 'swirlLeft 16s ease-in-out infinite',
+                    animationDelay: '3s'
+                  }}
+                />
+              </svg>
+            </div>
+          )}
+
+          {/* Photo - Center */}
+          {currentUpload.photoUrl && (
+            <div className="absolute inset-0 flex items-center justify-center z-10">
+              <div className="relative w-full max-w-2xl mx-auto px-4 h-full flex items-center justify-center">
+                <img
+                  src={getImageUrl(currentUpload.photoUrl)}
+                  alt="Display"
+                  className="object-contain"
+                  style={{ 
+                    height: '100vh',
+                    width: 'auto',
+                    maxWidth: '100%'
+                  }}
+                  onError={() => {
+                    console.error("Image failed to load:", currentUpload.photoUrl);
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* LiveWall Visuals - Right Side */}
+          {currentUpload.photoUrl && (
+            <div className="absolute right-0 top-0 bottom-0 w-1/3 pointer-events-none overflow-hidden">
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
+                <defs>
+                  <linearGradient id="swirlGradientRight1" x1="100%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#ff6b6b" stopOpacity="0.9" />
+                    <stop offset="25%" stopColor="#ffa500" stopOpacity="0.8" />
+                    <stop offset="50%" stopColor="#fbbf24" stopOpacity="0.7" />
+                    <stop offset="75%" stopColor="#ec4899" stopOpacity="0.6" />
+                    <stop offset="100%" stopColor="#a855f7" stopOpacity="0.4" />
+                  </linearGradient>
+                  <linearGradient id="swirlGradientRight2" x1="100%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#f97316" stopOpacity="0.8" />
+                    <stop offset="30%" stopColor="#fbbf24" stopOpacity="0.7" />
+                    <stop offset="60%" stopColor="#ec4899" stopOpacity="0.6" />
+                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.3" />
+                  </linearGradient>
+                  <linearGradient id="swirlGradientRight3" x1="100%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#ffa500" stopOpacity="0.7" />
+                    <stop offset="40%" stopColor="#ec4899" stopOpacity="0.6" />
+                    <stop offset="80%" stopColor="#a855f7" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="#6366f1" stopOpacity="0.2" />
+                  </linearGradient>
+                  <filter id="glowRight">
+                    <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+                {/* Main swirling pattern - Mirrored, flowing from bottom center upward and outward */}
+                <path
+                  d="M 200 750 C 220 700, 250 650, 280 600 C 300 550, 310 500, 300 450 C 290 400, 270 350, 240 300 C 220 250, 200 200, 180 150 C 160 100, 140 80, 120 100 C 100 120, 90 150, 80 200 C 70 250, 70 300, 80 350 C 90 400, 110 450, 140 500 C 160 550, 180 600, 200 650 C 210 700, 200 750, 200 750"
+                  fill="none"
+                  stroke="url(#swirlGradientRight1)"
+                  strokeWidth="4"
+                  filter="url(#glowRight)"
+                  style={{
+                    animation: 'swirlRight 12s ease-in-out infinite'
+                  }}
+                />
+                {/* Secondary swirling pattern - Mirrored */}
+                <path
+                  d="M 180 720 C 200 680, 230 640, 260 600 C 280 560, 290 520, 285 480 C 280 440, 265 400, 240 360 C 215 320, 190 280, 160 240 C 140 200, 120 170, 100 180 C 80 190, 65 220, 60 260 C 55 300, 60 340, 75 380 C 90 420, 115 460, 145 500 C 165 540, 180 580, 180 620 C 180 660, 180 720, 180 720"
+                  fill="none"
+                  stroke="url(#swirlGradientRight2)"
+                  strokeWidth="3.5"
+                  filter="url(#glowRight)"
+                  style={{
+                    animation: 'swirlRight 14s ease-in-out infinite',
+                    animationDelay: '1.5s'
+                  }}
+                />
+                {/* Tertiary swirling pattern - Mirrored */}
+                <path
+                  d="M 220 740 C 240 700, 270 660, 300 620 C 320 580, 330 540, 325 500 C 320 460, 305 420, 280 380 C 255 340, 225 300, 190 260 C 165 220, 140 190, 110 200 C 85 210, 70 240, 65 280 C 60 320, 65 360, 80 400 C 95 440, 120 480, 150 520 C 170 560, 190 600, 210 640 C 220 680, 220 740, 220 740"
+                  fill="none"
+                  stroke="url(#swirlGradientRight3)"
+                  strokeWidth="3"
+                  filter="url(#glowRight)"
+                  style={{
+                    animation: 'swirlRight 16s ease-in-out infinite',
+                    animationDelay: '3s'
+                  }}
+                />
+              </svg>
             </div>
           )}
 
@@ -267,5 +451,6 @@ export default function DisplayPage() {
         </div>
       )}
     </div>
+    </>
   );
 }

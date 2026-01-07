@@ -13,15 +13,12 @@ export default function UploadPage() {
   const [isLoadingCamera, setIsLoadingCamera] = useState(false);
   const [showMessageScreen, setShowMessageScreen] = useState(false);
   const [showFlash, setShowFlash] = useState(false);
+  const [showIntroScreen, setShowIntroScreen] = useState(true);
+  const [selectedOption, setSelectedOption] = useState(null); // 'photo' or 'message'
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const canvasRef = useRef(null);
   const capturedFileRef = useRef(null);
-
-  // Auto-open camera on page load
-  useEffect(() => {
-    openCamera();
-  }, []);
 
   // Cleanup stream on unmount
   useEffect(() => {
@@ -171,6 +168,18 @@ export default function UploadPage() {
     setCameraError(null);
   };
 
+  // Handle intro screen option selection
+  const handleOptionSelect = (option) => {
+    setSelectedOption(option);
+    setShowIntroScreen(false);
+    if (option === 'photo') {
+      openCamera();
+    } else if (option === 'message') {
+      setShowMessageScreen(true);
+    }
+  };
+
+
   // Capture photo
   const capturePhoto = () => {
     if (!videoRef.current || !canvasRef.current) return;
@@ -216,16 +225,21 @@ export default function UploadPage() {
     setMessage("");
     setShowMessageScreen(false);
     setSubmitStatus(null);
+    setShowIntroScreen(true);
+    setSelectedOption(null);
     capturedFileRef.current = null;
-    // Reopen camera
-    openCamera();
+    // Close camera if open
+    if (streamRef.current) {
+      closeCamera();
+    }
   };
 
   // Submit photo
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!capturedImage) return;
+    // Allow submission with just message (no photo required)
+    if (!capturedImage && !message.trim()) return;
 
     setIsSubmitting(true);
     setSubmitStatus(null);
@@ -233,14 +247,20 @@ export default function UploadPage() {
     try {
       const formData = new FormData();
 
-      // Get the file from ref
+      // Get the file from ref (if photo was uploaded)
       const file = capturedFileRef.current;
       if (file) {
         formData.append("photo", file);
       }
 
+      // Message is required if no photo, optional if photo exists
       if (message.trim()) {
         formData.append("message", message.trim());
+      } else if (!file) {
+        // If no photo and no message, show error
+        setSubmitStatus("error");
+        setIsSubmitting(false);
+        return;
       }
 
       const response = await fetch(API_ENDPOINTS.UPLOADS, {
@@ -250,7 +270,7 @@ export default function UploadPage() {
 
       if (response.ok) {
         setSubmitStatus("success");
-        // Reset after 2 seconds and take new photo
+        // Reset after 2 seconds and return to intro
         setTimeout(() => {
           discardPhoto();
         }, 2000);
@@ -294,8 +314,65 @@ export default function UploadPage() {
         }
       `}</style>
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center p-4">
+        {/* Intro Screen */}
+        {showIntroScreen && (
+          <div className="w-full max-w-lg animate-fadeIn">
+            <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/10">
+              <div className="text-center mb-8">
+                <h1 className="text-4xl sm:text-5xl font-bold mb-3"
+                    style={{
+                      fontFamily: 'cursive',
+                      textShadow: '0 0 30px rgba(236, 72, 153, 0.8), 0 0 60px rgba(236, 72, 153, 0.4)',
+                      color: '#ec4899'
+                    }}>
+                  LiveWall
+                </h1>
+                <p className="text-lg sm:text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-300 mb-6"
+                   style={{ textShadow: '0 0 20px rgba(103, 232, 249, 0.5)' }}>
+                  EXPERIENCE
+                </p>
+                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
+                  Share your night
+                </h2>
+              </div>
+
+              <div className="space-y-4">
+                {/* Upload Photo Button - Opens Camera */}
+                <button
+                  type="button"
+                  onClick={() => handleOptionSelect('photo')}
+                  className="w-full py-4 px-6 rounded-2xl border-2 font-bold text-lg transition-all hover:scale-105 active:scale-95"
+                  style={{
+                    borderColor: '#3b82f6',
+                    color: '#3b82f6',
+                    boxShadow: '0 0 20px rgba(59, 130, 246, 0.5), inset 0 0 20px rgba(59, 130, 246, 0.1)',
+                    textShadow: '0 0 10px rgba(59, 130, 246, 0.8)'
+                  }}
+                >
+                  UPLOAD PHOTO
+                </button>
+
+                {/* Send Message Button */}
+                <button
+                  type="button"
+                  onClick={() => handleOptionSelect('message')}
+                  className="w-full py-4 px-6 rounded-2xl border-2 font-bold text-lg transition-all hover:scale-105 active:scale-95"
+                  style={{
+                    borderColor: '#ec4899',
+                    color: '#ec4899',
+                    boxShadow: '0 0 20px rgba(236, 72, 153, 0.5), inset 0 0 20px rgba(236, 72, 153, 0.1)',
+                    textShadow: '0 0 10px rgba(236, 72, 153, 0.8)'
+                  }}
+                >
+                  SEND MESSAGE
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Camera View */}
-      {isCameraOpen && (
+      {isCameraOpen && !showIntroScreen && (
         <div className="fixed inset-0 z-50 bg-black flex flex-col">
           {/* Header */}
           <div className="bg-black/40 backdrop-blur-xl border-b border-white/10 p-4">
@@ -304,149 +381,178 @@ export default function UploadPage() {
             </h1>
           </div>
 
-          {/* Video Preview */}
-          <div className="flex-1 relative flex items-center justify-center bg-black">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-full object-cover"
-            />
-            <canvas ref={canvasRef} className="hidden" />
-
-            {/* Flash Animation */}
-            {showFlash && (
-              <div
-                className="absolute inset-0 bg-white pointer-events-none"
+          {/* Video Preview with Phone Frame */}
+          <div className="flex-1 relative flex items-center justify-center bg-black p-4 md:p-8">
+            {/* Phone Frame Container */}
+            <div className="relative w-full max-w-sm mx-auto" style={{ aspectRatio: '9/16' }}>
+              {/* Phone Bezel with Glowing Border */}
+              <div 
+                className="absolute inset-0 rounded-[3rem] border-[3px] md:border-[4px]"
                 style={{
-                  animation: "flash 300ms ease-out",
+                  borderColor: 'rgba(236, 72, 153, 0.6)',
+                  boxShadow: `
+                    0 0 30px rgba(236, 72, 153, 0.8),
+                    0 0 60px rgba(236, 72, 153, 0.4),
+                    inset 0 0 20px rgba(236, 72, 153, 0.2)
+                  `,
+                  backgroundColor: 'rgba(0, 0, 0, 0.9)'
                 }}
-              />
-            )}
+              >
+                {/* Top Notch */}
+                <div 
+                  className="absolute top-0 left-1/2 transform -translate-x-1/2 w-32 h-8 rounded-b-3xl"
+                  style={{
+                    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                    borderLeft: '3px solid rgba(236, 72, 153, 0.6)',
+                    borderRight: '3px solid rgba(236, 72, 153, 0.6)',
+                    borderBottom: '3px solid rgba(236, 72, 153, 0.6)',
+                    boxShadow: '0 0 15px rgba(236, 72, 153, 0.5)'
+                  }}
+                />
+                
+                {/* Phone Screen Area */}
+                <div className="absolute inset-0 rounded-[2.5rem] overflow-hidden" style={{ margin: '8px' }}>
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full h-full object-cover"
+                  />
+                  <canvas ref={canvasRef} className="hidden" />
 
-            {/* Loading indicator */}
-            {isLoadingCamera && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/80">
-                <div className="text-center">
-                  <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
-                  <p className="text-white text-sm">Accessing camera...</p>
-                  <p className="text-white/70 text-xs mt-2">
-                    Please allow camera access when prompted
-                  </p>
-                </div>
-              </div>
-            )}
+                  {/* Flash Animation */}
+                  {showFlash && (
+                    <div
+                      className="absolute inset-0 bg-white pointer-events-none"
+                      style={{
+                        animation: "flash 300ms ease-out",
+                      }}
+                    />
+                  )}
 
-            {/* Error message */}
-            {cameraError && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/80 p-4 overflow-y-auto">
-                <div className="text-center max-w-md">
-                  <div className="w-16 h-16 bg-rose-500/20 rounded-full flex items-center justify-center mb-4 mx-auto">
-                    <svg
-                      className="w-8 h-8 text-rose-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 3l18 18"
-                      />
-                    </svg>
-                  </div>
-                  <p className="text-white text-sm font-medium mb-3">
-                    {cameraError}
-                  </p>
-
-                  {/* Show instructions if permission was denied */}
-                  {(cameraError.includes("permission") ||
-                    cameraError.includes("denied")) && (
-                    <div className="bg-white/5 rounded-xl p-4 mb-4 text-left">
-                      <p className="text-white text-xs font-semibold mb-2">
-                        To enable camera access:
-                      </p>
-                      <ol className="text-slate-300 text-xs space-y-1 list-decimal list-inside">
-                        <li>
-                          Look for the camera icon in your browser's address bar
-                        </li>
-                        <li>Click it and select "Allow" for camera access</li>
-                        <li>Then click "Try Again" below</li>
-                      </ol>
-                      <p className="text-slate-400 text-xs mt-3 italic">
-                        Or refresh the page and allow camera when prompted
-                      </p>
+                  {/* Loading indicator */}
+                  {isLoadingCamera && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/80">
+                      <div className="text-center">
+                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
+                        <p className="text-white text-sm">Accessing camera...</p>
+                        <p className="text-white/70 text-xs mt-2">
+                          Please allow camera access when prompted
+                        </p>
+                      </div>
                     </div>
                   )}
 
-                  <div className="flex flex-col gap-2">
-                    <button
-                      onClick={openCamera}
-                      className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-full font-semibold transition-all shadow-lg"
-                    >
-                      Try Again
-                    </button>
-                    <button
-                      onClick={() => window.location.reload()}
-                      className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full font-medium transition-all text-sm"
-                    >
-                      Refresh Page
-                    </button>
-                  </div>
+                  {/* Error message */}
+                  {cameraError && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/80 p-4 overflow-y-auto">
+                      <div className="text-center max-w-md">
+                        <div className="w-16 h-16 bg-rose-500/20 rounded-full flex items-center justify-center mb-4 mx-auto">
+                          <svg
+                            className="w-8 h-8 text-rose-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M3 3l18 18"
+                            />
+                          </svg>
+                        </div>
+                        <p className="text-white text-sm font-medium mb-3">
+                          {cameraError}
+                        </p>
+
+                        {/* Show instructions if permission was denied */}
+                        {(cameraError.includes("permission") ||
+                          cameraError.includes("denied")) && (
+                          <div className="bg-white/5 rounded-xl p-4 mb-4 text-left">
+                            <p className="text-white text-xs font-semibold mb-2">
+                              To enable camera access:
+                            </p>
+                            <ol className="text-slate-300 text-xs space-y-1 list-decimal list-inside">
+                              <li>
+                                Look for the camera icon in your browser's address bar
+                              </li>
+                              <li>Click it and select "Allow" for camera access</li>
+                              <li>Then click "Try Again" below</li>
+                            </ol>
+                            <p className="text-slate-400 text-xs mt-3 italic">
+                              Or refresh the page and allow camera when prompted
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="flex flex-col gap-2">
+                          <button
+                            onClick={openCamera}
+                            className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-full font-semibold transition-all shadow-lg"
+                          >
+                            Try Again
+                          </button>
+                          <button
+                            onClick={() => window.location.reload()}
+                            className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full font-medium transition-all text-sm"
+                          >
+                            Refresh Page
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
+
+                {/* Bottom Home Button */}
+                <div 
+                  className="absolute bottom-4 left-1/2 transform -translate-x-1/2 w-16 h-16 rounded-full border-2"
+                  style={{
+                    borderColor: 'rgba(236, 72, 153, 0.6)',
+                    boxShadow: '0 0 20px rgba(236, 72, 153, 0.6)',
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)'
+                  }}
+                />
               </div>
-            )}
+            </div>
+
           </div>
 
-          {/* Camera Controls */}
+          {/* Camera Controls - Always visible on laptop/desktop */}
           {streamRef.current && !isLoadingCamera && !cameraError && (
-            <div className="bg-gradient-to-t from-black to-transparent p-6 md:p-8">
-              <div className="flex items-center justify-center">
+            <div className="bg-gradient-to-t from-black via-black/95 to-transparent p-6 md:p-8">
+              <div className="flex flex-col items-center justify-center gap-4">
+                {/* Capture Button */}
                 <button
                   type="button"
                   onClick={capturePhoto}
                   className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-full border-4 md:border-6 border-white/30 shadow-2xl hover:scale-105 active:scale-95 transition-transform flex items-center justify-center relative z-50"
+                  style={{
+                    boxShadow: '0 0 30px rgba(255, 255, 255, 0.5), 0 0 60px rgba(255, 255, 255, 0.3)'
+                  }}
                 >
                   <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-full"></div>
                 </button>
+                {/* Helper text for desktop */}
+                <p className="text-white/70 text-sm md:text-base font-medium">
+                  Click to capture photo
+                </p>
               </div>
-              {/* Photographer Link */}
-              {/* <div className="mt-6 text-center">
-                <a
-                  href="/photographer/login"
-                  className="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 text-sm font-medium transition-colors"
-                >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                  <span className="hover:underline">Photographer? Batch Upload Here</span>
-                </a>
-              </div> */}
             </div>
           )}
         </div>
       )}
 
-      {/* Message Screen */}
-      {showMessageScreen && capturedImage && (
+      {/* Message Screen - Show when message option selected or after photo capture */}
+      {showMessageScreen && (
         <div className="w-full max-w-lg animate-fadeIn">
           <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/10">
             <div className="text-center mb-6">
@@ -457,14 +563,16 @@ export default function UploadPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Image Preview */}
-              <div className="relative w-full h-64 rounded-2xl overflow-hidden border-2 border-white/20 bg-black/20">
-                <img
-                  src={capturedImage}
-                  alt="Captured"
-                  className="w-full h-full object-contain"
-                />
-              </div>
+              {/* Image Preview - Only show if image exists */}
+              {capturedImage && (
+                <div className="relative w-full h-64 rounded-2xl overflow-hidden border-2 border-white/20 bg-black/20">
+                  <img
+                    src={capturedImage}
+                    alt="Captured"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              )}
 
               {/* Message Input */}
               <div>

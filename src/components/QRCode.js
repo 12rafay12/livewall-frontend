@@ -3,7 +3,7 @@
 import { QRCodeSVG } from "qrcode.react";
 
 export default function QRCode({
-  variant = "full", // "full" | "compact" | "mini"
+  variant = "full", // "full" | "compact" | "mini" | "club"
   className = ""
 }) {
   // Get the QR code URL from environment variable or fallback to dynamic URL
@@ -152,6 +152,41 @@ export default function QRCode({
               </p>
             </div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Club version - small QR with transparent background for VJ overlays
+  if (variant === "club") {
+    return (
+      <div className={`relative ${className}`} style={{ backgroundColor: 'transparent' }}>
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          {/* QR Code with semi-transparent background for visibility */}
+          <div className="p-2 rounded-lg"
+               style={{
+                 backgroundColor: 'rgba(0, 0, 0, 0.4)',
+                 backdropFilter: 'blur(4px)',
+                 boxShadow: '0 0 20px rgba(236, 72, 153, 0.4), 0 0 40px rgba(236, 72, 153, 0.2)',
+                 border: '2px solid rgba(236, 72, 153, 0.6)'
+               }}>
+            <QRCodeSVG
+              value={uploadUrl}
+              size={120}
+              level="H"
+              includeMargin={false}
+              bgColor="rgba(0, 0, 0, 0.4)"
+              fgColor="#ffffff"
+            />
+          </div>
+          {/* Text */}
+          <p className="font-bold text-base sm:text-lg md:text-xl text-center sm:text-left"
+             style={{
+               textShadow: '0 0 15px rgba(236, 72, 153, 0.8), 0 0 30px rgba(236, 72, 153, 0.4)',
+               color: '#ec4899'
+             }}>
+            Scan · Share · Shine
+          </p>
         </div>
       </div>
     );

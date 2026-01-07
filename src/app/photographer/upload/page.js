@@ -8,7 +8,6 @@ export default function PhotographerBatchUpload() {
   const router = useRouter();
   const [photographer, setPhotographer] = useState(null);
   const [files, setFiles] = useState([]);
-  const [message, setMessage] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState(null);
@@ -79,9 +78,6 @@ export default function PhotographerBatchUpload() {
       files.forEach((file) => {
         formData.append("photos", file);
       });
-      if (message.trim()) {
-        formData.append("message", message.trim());
-      }
       formData.append("uploadedBy", photographer.id);
 
       const response = await fetch(API_ENDPOINTS.BATCH_UPLOADS, {
@@ -92,7 +88,6 @@ export default function PhotographerBatchUpload() {
       if (response.ok) {
         setUploadStatus("success");
         setFiles([]);
-        setMessage("");
         setUploadProgress(100);
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
@@ -241,28 +236,6 @@ export default function PhotographerBatchUpload() {
               </div>
             )}
 
-            {/* Message Input */}
-            <div>
-              <label
-                htmlFor="message"
-                className="block text-sm font-semibold text-white mb-3"
-              >
-                Message{" "}
-                <span className="text-slate-400 font-normal">(Optional - applies to all images)</span>
-              </label>
-              <textarea
-                id="message"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Add a message for all uploads..."
-                rows={4}
-                maxLength={500}
-                className="w-full px-5 py-4 bg-white/5 border border-white/20 rounded-2xl text-base text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none transition-all"
-              />
-              <div className="text-right text-xs text-slate-500 mt-2">
-                {message.length}/500
-              </div>
-            </div>
 
             {/* Submit Button */}
             <button
