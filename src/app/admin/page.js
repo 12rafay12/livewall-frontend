@@ -533,6 +533,26 @@ export default function AdminPanel() {
                         </div>
                       )}
 
+                      {/* Username and Email */}
+                      {(upload.username || upload.email) && (
+                        <div className="p-3 sm:p-4 bg-black/10 border-t border-white/5">
+                          <div className="space-y-1">
+                            {upload.username && (
+                              <p className="text-white/80 text-xs sm:text-sm">
+                                <span className="text-white/60">Username: </span>
+                                {upload.username}
+                              </p>
+                            )}
+                            {upload.email && (
+                              <p className="text-white/80 text-xs sm:text-sm">
+                                <span className="text-white/60">Email: </span>
+                                {upload.email}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Action Buttons */}
                       <div className="p-3 sm:p-4 border-t border-white/10 space-y-2">
                         {upload.status.toLowerCase() === "pending" && (

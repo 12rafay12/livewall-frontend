@@ -6,6 +6,9 @@ import { API_ENDPOINTS } from "@/config/api";
 export default function UploadPage() {
   const [capturedImage, setCapturedImage] = useState(null);
   const [message, setMessage] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -276,6 +279,9 @@ export default function UploadPage() {
   const discardPhoto = () => {
     setCapturedImage(null);
     setMessage("");
+    setUsername("");
+    setEmail("");
+    setEmailError("");
     setShowMessageScreen(false);
     setSubmitStatus(null);
     setShowIntroScreen(true);
@@ -287,9 +293,41 @@ export default function UploadPage() {
     }
   };
 
+  // Validate email format
+  const validateEmail = (emailValue) => {
+    if (!emailValue.trim()) {
+      setEmailError("");
+      return true; // Empty email is allowed (optional field)
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (emailRegex.test(emailValue.trim())) {
+      setEmailError("");
+      return true;
+    } else {
+      setEmailError("Please enter a valid email address");
+      return false;
+    }
+  };
+
+  // Handle email change with validation
+  const handleEmailChange = (e) => {
+    const value = e.target.value;
+    setEmail(value);
+    if (value.trim()) {
+      validateEmail(value);
+    } else {
+      setEmailError("");
+    }
+  };
+
   // Submit photo
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate email if provided
+    if (email.trim() && !validateEmail(email)) {
+      return;
+    }
 
     // Allow submission with just message (no photo required)
     if (!capturedImage && !message.trim()) return;
@@ -314,6 +352,14 @@ export default function UploadPage() {
         setSubmitStatus("error");
         setIsSubmitting(false);
         return;
+      }
+
+      // Add username and email if provided
+      if (username.trim()) {
+        formData.append("username", username.trim());
+      }
+      if (email.trim()) {
+        formData.append("email", email.trim());
       }
 
       const response = await fetch(API_ENDPOINTS.UPLOADS, {
@@ -409,22 +455,6 @@ export default function UploadPage() {
                   }}
                 >
                   UPLOAD PHOTO
-                </button>
-
-                {/* Send Message Button */}
-                <button
-                  type="button"
-                  onClick={() => handleOptionSelect("message")}
-                  className="w-full py-4 px-6 rounded-2xl border-2 font-bold text-lg transition-all hover:scale-105 active:scale-95"
-                  style={{
-                    borderColor: "#ec4899",
-                    color: "#ec4899",
-                    boxShadow:
-                      "0 0 20px rgba(236, 72, 153, 0.5), inset 0 0 20px rgba(236, 72, 153, 0.1)",
-                    textShadow: "0 0 10px rgba(236, 72, 153, 0.8)",
-                  }}
-                >
-                  SEND MESSAGE
                 </button>
               </div>
             </div>
@@ -672,6 +702,36 @@ export default function UploadPage() {
                   <div className="text-right text-xs text-slate-500 mt-2">
                     {message.length}/500
                   </div>
+                </div>
+
+                {/* Username Input */}
+                <div>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Username (optional)"
+                    className="w-full px-5 py-4 bg-white/5 border border-white/20 rounded-2xl text-base text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                  />
+                </div>
+
+                {/* Email Input */}
+                <div>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={handleEmailChange}
+                    onBlur={() => email.trim() && validateEmail(email)}
+                    placeholder="Email (optional)"
+                    className={`w-full px-5 py-4 bg-white/5 border rounded-2xl text-base text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all ${
+                      emailError
+                        ? "border-rose-500 focus:ring-rose-500 focus:border-transparent"
+                        : "border-white/20 focus:ring-indigo-500 focus:border-transparent"
+                    }`}
+                  />
+                  {emailError && (
+                    <p className="text-rose-400 text-xs mt-2 px-1">{emailError}</p>
+                  )}
                 </div>
 
                 {/* Action Buttons */}
