@@ -14,11 +14,16 @@ export default function QRCode({
     }
 
     // Fallback: Dynamic URL based on current location
-    const baseUrl = typeof window !== "undefined"
-      ? `${window.location.protocol}//${window.location.host}`
-      : "http://localhost:3000";
+    // Only works client-side, so we need to handle SSR case
+    if (typeof window !== "undefined") {
+      return `${window.location.protocol}//${window.location.host}/upload`;
+    }
 
-    return `${baseUrl}/upload`;
+    // For SSR, return empty string or use environment variable
+    // This will be corrected on the client side
+    return process.env.NEXT_PUBLIC_BASE_URL 
+      ? `${process.env.NEXT_PUBLIC_BASE_URL}/upload`
+      : "";
   };
 
   const uploadUrl = getUploadUrl();
