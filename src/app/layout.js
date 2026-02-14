@@ -14,6 +14,19 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "LiveWall - Club Live Wall System",
   description: "QR-based Live Wall system for clubs - Upload photos and messages to display",
+  themeColor: "#0a0a0a",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover", // For safe-area support on notched devices
 };
 
 export default function RootLayout({ children }) {
