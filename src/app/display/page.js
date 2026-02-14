@@ -227,23 +227,170 @@ export default function DisplayPage() {
         </div>
       )}
 
-      {/* Passive Mode */}
+      {/* Passive Mode - Enhanced with Club Visuals */}
       {!isActive && !showFullScreenQR && (
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center p-4 sm:p-6">
-          {/* Small neon QR code in corner */}
-          <div className="absolute top-3 right-3 sm:top-4 sm:right-4 md:top-6 md:right-6">
-            <QRCode variant="mini" />
+        <div className="absolute inset-0 bg-black overflow-hidden">
+          {/* Animated Club Visuals Background */}
+          <div className="absolute inset-0">
+            {/* Left Side Visuals */}
+            <div className="absolute left-0 top-0 bottom-0 w-1/2 pointer-events-none overflow-hidden">
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
+                <defs>
+                  <linearGradient id="passiveSwirlLeft1" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#ff6b6b" stopOpacity="0.4" />
+                    <stop offset="25%" stopColor="#ffa500" stopOpacity="0.3" />
+                    <stop offset="50%" stopColor="#fbbf24" stopOpacity="0.25" />
+                    <stop offset="75%" stopColor="#ec4899" stopOpacity="0.2" />
+                    <stop offset="100%" stopColor="#a855f7" stopOpacity="0.15" />
+                  </linearGradient>
+                  <linearGradient id="passiveSwirlLeft2" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#f97316" stopOpacity="0.35" />
+                    <stop offset="30%" stopColor="#fbbf24" stopOpacity="0.3" />
+                    <stop offset="60%" stopColor="#ec4899" stopOpacity="0.25" />
+                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.15" />
+                  </linearGradient>
+                  <linearGradient id="passiveSwirlLeft3" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#ffa500" stopOpacity="0.3" />
+                    <stop offset="40%" stopColor="#ec4899" stopOpacity="0.25" />
+                    <stop offset="80%" stopColor="#a855f7" stopOpacity="0.2" />
+                    <stop offset="100%" stopColor="#6366f1" stopOpacity="0.1" />
+                  </linearGradient>
+                  <filter id="passiveGlowLeft">
+                    <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+                <path
+                  d="M 200 750 C 180 700, 150 650, 120 600 C 100 550, 90 500, 100 450 C 110 400, 130 350, 160 300 C 180 250, 200 200, 220 150 C 240 100, 260 80, 280 100 C 300 120, 310 150, 320 200 C 330 250, 330 300, 320 350 C 310 400, 290 450, 260 500 C 240 550, 220 600, 200 650 C 190 700, 200 750, 200 750"
+                  fill="none"
+                  stroke="url(#passiveSwirlLeft1)"
+                  strokeWidth="4"
+                  filter="url(#passiveGlowLeft)"
+                  style={{
+                    animation: 'swirlLeft 15s ease-in-out infinite'
+                  }}
+                />
+                <path
+                  d="M 220 720 C 200 680, 170 640, 140 600 C 120 560, 110 520, 115 480 C 120 440, 135 400, 160 360 C 185 320, 210 280, 240 240 C 260 200, 280 170, 300 180 C 320 190, 335 220, 340 260 C 345 300, 340 340, 325 380 C 310 420, 285 460, 255 500 C 235 540, 220 580, 220 620 C 220 660, 220 720, 220 720"
+                  fill="none"
+                  stroke="url(#passiveSwirlLeft2)"
+                  strokeWidth="3.5"
+                  filter="url(#passiveGlowLeft)"
+                  style={{
+                    animation: 'swirlLeft 18s ease-in-out infinite',
+                    animationDelay: '2s'
+                  }}
+                />
+                <path
+                  d="M 180 740 C 160 700, 130 660, 100 620 C 80 580, 70 540, 75 500 C 80 460, 95 420, 120 380 C 145 340, 175 300, 210 260 C 235 220, 260 190, 290 200 C 315 210, 330 240, 335 280 C 340 320, 335 360, 320 400 C 305 440, 280 480, 250 520 C 230 560, 210 600, 190 640 C 180 680, 180 740, 180 740"
+                  fill="none"
+                  stroke="url(#passiveSwirlLeft3)"
+                  strokeWidth="3"
+                  filter="url(#passiveGlowLeft)"
+                  style={{
+                    animation: 'swirlLeft 20s ease-in-out infinite',
+                    animationDelay: '4s'
+                  }}
+                />
+              </svg>
+            </div>
+            
+            {/* Right Side Visuals */}
+            <div className="absolute right-0 top-0 bottom-0 w-1/2 pointer-events-none overflow-hidden">
+              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
+                <defs>
+                  <linearGradient id="passiveSwirlRight1" x1="100%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#ff6b6b" stopOpacity="0.4" />
+                    <stop offset="25%" stopColor="#ffa500" stopOpacity="0.3" />
+                    <stop offset="50%" stopColor="#fbbf24" stopOpacity="0.25" />
+                    <stop offset="75%" stopColor="#ec4899" stopOpacity="0.2" />
+                    <stop offset="100%" stopColor="#a855f7" stopOpacity="0.15" />
+                  </linearGradient>
+                  <linearGradient id="passiveSwirlRight2" x1="100%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#f97316" stopOpacity="0.35" />
+                    <stop offset="30%" stopColor="#fbbf24" stopOpacity="0.3" />
+                    <stop offset="60%" stopColor="#ec4899" stopOpacity="0.25" />
+                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.15" />
+                  </linearGradient>
+                  <linearGradient id="passiveSwirlRight3" x1="100%" y1="100%" x2="0%" y2="0%">
+                    <stop offset="0%" stopColor="#ffa500" stopOpacity="0.3" />
+                    <stop offset="40%" stopColor="#ec4899" stopOpacity="0.25" />
+                    <stop offset="80%" stopColor="#a855f7" stopOpacity="0.2" />
+                    <stop offset="100%" stopColor="#6366f1" stopOpacity="0.1" />
+                  </linearGradient>
+                  <filter id="passiveGlowRight">
+                    <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+                <path
+                  d="M 200 750 C 220 700, 250 650, 280 600 C 300 550, 310 500, 300 450 C 290 400, 270 350, 240 300 C 220 250, 200 200, 180 150 C 160 100, 140 80, 120 100 C 100 120, 90 150, 80 200 C 70 250, 70 300, 80 350 C 90 400, 110 450, 140 500 C 160 550, 180 600, 200 650 C 210 700, 200 750, 200 750"
+                  fill="none"
+                  stroke="url(#passiveSwirlRight1)"
+                  strokeWidth="4"
+                  filter="url(#passiveGlowRight)"
+                  style={{
+                    animation: 'swirlRight 15s ease-in-out infinite'
+                  }}
+                />
+                <path
+                  d="M 180 720 C 200 680, 230 640, 260 600 C 280 560, 290 520, 285 480 C 280 440, 265 400, 240 360 C 215 320, 190 280, 160 240 C 140 200, 120 170, 100 180 C 80 190, 65 220, 60 260 C 55 300, 60 340, 75 380 C 90 420, 115 460, 145 500 C 165 540, 180 580, 180 620 C 180 660, 180 720, 180 720"
+                  fill="none"
+                  stroke="url(#passiveSwirlRight2)"
+                  strokeWidth="3.5"
+                  filter="url(#passiveGlowRight)"
+                  style={{
+                    animation: 'swirlRight 18s ease-in-out infinite',
+                    animationDelay: '2s'
+                  }}
+                />
+                <path
+                  d="M 220 740 C 240 700, 270 660, 300 620 C 320 580, 330 540, 325 500 C 320 460, 305 420, 280 380 C 255 340, 225 300, 190 260 C 165 220, 140 190, 110 200 C 85 210, 70 240, 65 280 C 60 320, 65 360, 80 400 C 95 440, 120 480, 150 520 C 170 560, 190 600, 210 640 C 220 680, 220 740, 220 740"
+                  fill="none"
+                  stroke="url(#passiveSwirlRight3)"
+                  strokeWidth="3"
+                  filter="url(#passiveGlowRight)"
+                  style={{
+                    animation: 'swirlRight 20s ease-in-out infinite',
+                    animationDelay: '4s'
+                  }}
+                />
+              </svg>
+            </div>
+          </div>
+
+          {/* Small neon QR code overlay in corner */}
+          <div className="absolute top-3 right-3 sm:top-4 sm:right-4 md:top-6 md:right-6 z-10">
+            <div className="relative">
+              <div 
+                className="absolute inset-0 rounded-lg blur-md"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.6), rgba(168, 85, 247, 0.6), rgba(59, 130, 246, 0.6))',
+                  boxShadow: '0 0 30px rgba(236, 72, 153, 0.8), 0 0 60px rgba(168, 85, 247, 0.6)'
+                }}
+              />
+              <QRCode variant="mini" />
+            </div>
           </div>
 
           {/* Center content */}
-          <div className="text-center px-4">
-            <div className="inline-block p-6 sm:p-8 bg-white/5 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-white/10">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-3 sm:mb-4 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-                LiveWall
-              </h1>
-              <p className="text-slate-400 text-base sm:text-lg md:text-xl">
-                Waiting for content...
-              </p>
+          <div className="absolute inset-0 flex items-center justify-center z-10">
+            <div className="text-center px-4">
+              <div className="inline-block p-6 sm:p-8 bg-black/30 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-white/20 shadow-2xl">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-3 sm:mb-4 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent"
+                    style={{ textShadow: "0 0 30px rgba(139, 92, 246, 0.6)" }}>
+                  LiveWall
+                </h1>
+                <p className="text-slate-300 text-base sm:text-lg md:text-xl">
+                  Waiting for content...
+                </p>
+              </div>
             </div>
           </div>
         </div>
