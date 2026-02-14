@@ -398,6 +398,16 @@ export default function UploadPage() {
             opacity: 0;
           }
         }
+        @keyframes lightBar {
+          0%, 100% {
+            opacity: 0.3;
+            transform: translateX(-50%) scaleY(0.8);
+          }
+          50% {
+            opacity: 0.9;
+            transform: translateX(-50%) scaleY(1);
+          }
+        }
         @keyframes fadeIn {
           from {
             opacity: 0;
@@ -411,33 +421,69 @@ export default function UploadPage() {
         .animate-fadeIn {
           animation: fadeIn 300ms ease-out;
         }
+        .light-bar {
+          position: absolute;
+          left: 50%;
+          width: 2px;
+          height: 100%;
+          background: linear-gradient(to bottom, 
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.8) 20%,
+            rgba(255, 255, 255, 1) 50%,
+            rgba(255, 255, 255, 0.8) 80%,
+            rgba(255, 255, 255, 0) 100%
+          );
+          box-shadow: 0 0 20px rgba(255, 255, 255, 0.8),
+                      0 0 40px rgba(255, 255, 255, 0.6),
+                      0 0 60px rgba(255, 255, 255, 0.4);
+          animation: lightBar 0.3s ease-out;
+          pointer-events: none;
+          z-index: 50;
+        }
       `}</style>
-      <div className="h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center p-4 overflow-hidden" style={{ height: '100vh' }}>
+      <div 
+        className="fixed inset-0 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center overflow-hidden" 
+        style={{ 
+          height: '100vh',
+          height: '100dvh',
+          padding: 'env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)',
+          paddingTop: 'max(0px, env(safe-area-inset-top))',
+          paddingBottom: 'max(0px, env(safe-area-inset-bottom))',
+          paddingLeft: 'max(0px, env(safe-area-inset-left))',
+          paddingRight: 'max(0px, env(safe-area-inset-right))'
+        }}
+      >
         {/* Intro Screen */}
         {showIntroScreen && (
           <div className="w-full max-w-lg animate-fadeIn">
             <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/10">
               <div className="text-center mb-8">
-                <h1
-                  className="text-4xl sm:text-5xl font-bold mb-3"
-                  style={{
-                    fontFamily: "cursive",
-                    textShadow:
-                      "0 0 30px rgba(236, 72, 153, 0.8), 0 0 60px rgba(236, 72, 153, 0.4)",
-                    color: "#ec4899",
-                  }}
-                >
-                  LiveWall
-                </h1>
-                <p
-                  className="text-lg sm:text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-300 mb-6"
-                  style={{ textShadow: "0 0 20px rgba(103, 232, 249, 0.5)" }}
-                >
-                  EXPERIENCE
-                </p>
-                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">
+                <div className="mb-4">
+                  <h1
+                    className="text-4xl sm:text-5xl md:text-6xl font-bold mb-1"
+                    style={{
+                      fontFamily: "cursive",
+                      textShadow:
+                        "0 0 30px rgba(236, 72, 153, 0.8), 0 0 60px rgba(236, 72, 153, 0.4), 0 0 90px rgba(236, 72, 153, 0.2)",
+                      color: "#ec4899",
+                    }}
+                  >
+                    LiveWall
+                  </h1>
+                  <p
+                    className="text-lg sm:text-xl md:text-2xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-300 -mt-1"
+                    style={{ textShadow: "0 0 20px rgba(103, 232, 249, 0.5), 0 0 40px rgba(103, 232, 249, 0.3)" }}
+                  >
+                    EXPERIENCE
+                  </p>
+                </div>
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-4">
                   Share your night
                 </h2>
+                <p className="text-base sm:text-lg text-cyan-200/90 font-medium mb-6 px-4"
+                   style={{ textShadow: "0 0 10px rgba(103, 232, 249, 0.4)" }}>
+                  Upload your photo to appear on the LiveWall Screen
+                </p>
               </div>
 
               <div className="space-y-4">
@@ -463,16 +509,36 @@ export default function UploadPage() {
 
         {/* Camera View */}
         {isCameraOpen && !showIntroScreen && (
-          <div className="fixed inset-0 z-50 bg-black overflow-hidden" style={{ height: '100vh' }}>
+          <div 
+            className="fixed inset-0 z-50 bg-black overflow-hidden" 
+            style={{ 
+              height: '100vh',
+              height: '100dvh',
+              top: 'env(safe-area-inset-top)',
+              bottom: 'env(safe-area-inset-bottom)',
+              left: 'env(safe-area-inset-left)',
+              right: 'env(safe-area-inset-right)'
+            }}
+          >
             {/* Header with Switch Camera Button */}
-            <div className="absolute top-0 left-0 right-0 z-[60] bg-black/40 backdrop-blur-xl border-b border-white/10 p-4">
+            <div 
+              className="absolute top-0 left-0 right-0 z-[60] bg-black/40 backdrop-blur-xl border-b border-white/10 p-4"
+              style={{
+                paddingTop: 'max(1rem, calc(1rem + env(safe-area-inset-top)))'
+              }}
+            >
               <div className="flex items-center justify-between">
                 {/* Spacer for centering */}
                 <div className="w-12"></div>
 
-                <h1 className="text-2xl font-bold text-white text-center bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-                  Take a Photo
-                </h1>
+                <div className="text-center">
+                  <h1 className="text-2xl font-bold text-white bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                    Take a Photo
+                  </h1>
+                  <p className="text-xs text-cyan-200/80 mt-1" style={{ textShadow: "0 0 8px rgba(103, 232, 249, 0.4)" }}>
+                    Upload your photo to appear on the LiveWall Screen
+                  </p>
+                </div>
 
                 {/* Switch Camera Button */}
                 {streamRef.current && !isLoadingCamera && !cameraError && (
@@ -546,14 +612,31 @@ export default function UploadPage() {
                     />
                     <canvas ref={canvasRef} className="hidden" />
 
-                    {/* Flash Animation */}
+                    {/* Enhanced Flash Animation with Light Bars for Dark Clubs */}
                     {showFlash && (
-                      <div
-                        className="absolute inset-0 bg-white pointer-events-none"
-                        style={{
-                          animation: "flash 300ms ease-out",
-                        }}
-                      />
+                      <>
+                        {/* Main flash overlay */}
+                        <div
+                          className="absolute inset-0 bg-white pointer-events-none"
+                          style={{
+                            animation: "flash 300ms ease-out",
+                          }}
+                        />
+                        {/* Light bars for dark club illumination */}
+                        <div className="light-bar" style={{ left: '20%', animationDelay: '0ms' }} />
+                        <div className="light-bar" style={{ left: '30%', animationDelay: '50ms', width: '3px' }} />
+                        <div className="light-bar" style={{ left: '50%', animationDelay: '0ms', width: '4px' }} />
+                        <div className="light-bar" style={{ left: '70%', animationDelay: '50ms', width: '3px' }} />
+                        <div className="light-bar" style={{ left: '80%', animationDelay: '0ms' }} />
+                        {/* Additional side illumination */}
+                        <div 
+                          className="absolute inset-0 pointer-events-none"
+                          style={{
+                            background: 'linear-gradient(to right, rgba(255, 255, 255, 0.3) 0%, transparent 20%, transparent 80%, rgba(255, 255, 255, 0.3) 100%)',
+                            animation: "flash 300ms ease-out",
+                          }}
+                        />
+                      </>
                     )}
 
                     {/* Loading indicator */}
@@ -661,19 +744,62 @@ export default function UploadPage() {
                 <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-full pointer-events-none"></div>
               </button>
             )}
+            
+            {/* LiveWall Branding in Camera View */}
+            {streamRef.current && !isLoadingCamera && !cameraError && (
+              <div 
+                className="absolute top-4 left-4 z-[60] bg-black/40 backdrop-blur-md rounded-lg px-3 py-2 border border-white/20"
+                style={{
+                  top: 'max(1rem, calc(1rem + env(safe-area-inset-top)))'
+                }}
+              >
+                <p className="text-xs font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-cyan-300"
+                   style={{ textShadow: "0 0 10px rgba(236, 72, 153, 0.5)" }}>
+                  LiveWall
+                </p>
+                <p className="text-[10px] text-cyan-300/80 font-semibold -mt-0.5">
+                  EXPERIENCE
+                </p>
+              </div>
+            )}
           </div>
         )}
 
         {/* Message Screen - Show when message option selected or after photo capture */}
         {showMessageScreen && (
-          <div className="w-full max-w-lg animate-fadeIn">
+          <div className="w-full max-w-lg animate-fadeIn px-4">
             <div className="bg-white/5 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/10">
-              <div className="text-center mb-6">
-                <h1 className="text-3xl font-bold text-white mb-2 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-                  Add a Message
+              {/* LiveWall Branding */}
+              <div className="text-center mb-4">
+                <h1
+                  className="text-3xl sm:text-4xl font-bold mb-1"
+                  style={{
+                    fontFamily: "cursive",
+                    textShadow:
+                      "0 0 30px rgba(236, 72, 153, 0.8), 0 0 60px rgba(236, 72, 153, 0.4)",
+                    color: "#ec4899",
+                  }}
+                >
+                  LiveWall
                 </h1>
-                <p className="text-slate-400 text-sm">
+                <p
+                  className="text-base sm:text-lg font-semibold text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-blue-300 -mt-1"
+                  style={{ textShadow: "0 0 20px rgba(103, 232, 249, 0.5)" }}
+                >
+                  EXPERIENCE
+                </p>
+              </div>
+              
+              <div className="text-center mb-6">
+                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                  Add a Message
+                </h2>
+                <p className="text-slate-400 text-sm mb-2">
                   Optional - or send as is
+                </p>
+                <p className="text-cyan-200/90 text-sm font-medium"
+                   style={{ textShadow: "0 0 8px rgba(103, 232, 249, 0.4)" }}>
+                  Your photo will appear on the LiveWall Screen
                 </p>
               </div>
 
